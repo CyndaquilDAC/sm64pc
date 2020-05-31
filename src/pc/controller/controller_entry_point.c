@@ -1,6 +1,8 @@
 #include "lib/src/libultra_internal.h"
 #include "lib/src/osContInternal.h"
 
+#include "../configfile.h"
+
 #include "controller_recorded_tas.h"
 #include "controller_keyboard.h"
 
@@ -40,7 +42,8 @@ void osContGetReadData(OSContPad *pad) {
 
 #ifdef BETTERCAMERA
     uint32_t magnitude_sq = (uint32_t)(rightx * rightx) + (uint32_t)(righty * righty);
-    if (magnitude_sq > (uint32_t)(DEADZONE * DEADZONE)) {
+    uint32_t stickDeadzoneActual = configStickDeadzone * DEADZONE_STEP;
+    if (magnitude_sq > (uint32_t)(stickDeadzoneActual * stickDeadzoneActual)) {
         c_rightx = rightx / 0x100;
         int stick_y = -righty / 0x100;
         c_righty = stick_y == 128 ? 127 : stick_y;
@@ -54,5 +57,27 @@ void osContGetReadData(OSContPad *pad) {
 
     for (size_t i = 0; i < sizeof(controller_implementations) / sizeof(struct ControllerAPI *); i++) {
         controller_implementations[i]->read(pad);
+    }
+}
+
+u32 controller_get_raw_key(void) {
+    for (size_t i = 0; i < sizeof(controller_implementations) / sizeof(struct ControllerAPI *); i++) {
+        u32 vk = controller_implementations[i]->rawkey();
+        if (vk != VK_INVALID) return vk + controller_implementations[i]->vkbase;
+    }
+    return VK_INVALID;
+}
+
+void controller_shutdown(void) {
+    for (size_t i = 0; i < sizeof(controller_implementations) / sizeof(struct ControllerAPI *); i++) {
+        if (controller_implementations[i]->shutdown)
+            controller_implementations[i]->shutdown();
+    }
+}
+
+void controller_reconfigure(void) {
+    for (size_t i = 0; i < sizeof(controller_implementations) / sizeof(struct ControllerAPI *); i++) {
+        if (controller_implementations[i]->reconfig)
+            controller_implementations[i]->reconfig();
     }
 }
