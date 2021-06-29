@@ -76,14 +76,19 @@ static const u8 optsVideoStr[][32] = {
     { TEXT_OPT_TEXFILTER },
     { TEXT_OPT_NEAREST },
     { TEXT_OPT_LINEAR },
-    { TEXT_RESET_WINDOW },
+    { TEXT_OPT_RESETWND },
     { TEXT_OPT_VSYNC },
     { TEXT_OPT_DOUBLE },
     { TEXT_OPT_HUD },
+    { TEXT_OPT_THREEPT },
+    { TEXT_OPT_APPLY },
 };
 
 static const u8 optsAudioStr[][32] = {
-    { TEXT_OPT_MVOLUME },
+    { TEXT_OPT_MVOLUME },    
+    { TEXT_OPT_MUSVOLUME },
+    { TEXT_OPT_SFXVOLUME },
+    { TEXT_OPT_ENVVOLUME },
 };
 
 static const u8 optsCheatsStr[][64] = {
@@ -116,11 +121,13 @@ static const u8 bindStr[][32] = {
     { TEXT_BIND_LEFT },
     { TEXT_BIND_RIGHT },
     { TEXT_OPT_DEADZONE },
+    { TEXT_OPT_RUMBLE }
 };
 
 static const u8 *filterChoices[] = {
     optsVideoStr[2],
     optsVideoStr[3],
+    optsVideoStr[8],
 };
 
 static const u8 *vsyncChoices[] = {
@@ -203,6 +210,10 @@ static void optvideo_reset_window(UNUSED struct Option *self, s32 arg) {
     }
 }
 
+static void optvideo_apply(UNUSED struct Option *self, s32 arg) {
+    if (!arg) configWindow.settings_changed = true;
+}
+
 /* submenu option lists */
 
 #ifdef BETTERCAMERA
@@ -237,18 +248,23 @@ static struct Option optsControls[] = {
     // max deadzone is 31000; this is less than the max range of ~32768, but this
     // way, the player can't accidentally lock themselves out of using the stick
     DEF_OPT_SCROLL( bindStr[16], &configStickDeadzone, 0, 100, 1 ),
+    DEF_OPT_SCROLL( bindStr[17], &configRumbleStrength, 0, 100, 1)
 };
 
 static struct Option optsVideo[] = {
     DEF_OPT_TOGGLE( optsVideoStr[0], &configWindow.fullscreen ),
     DEF_OPT_CHOICE( optsVideoStr[5], &configWindow.vsync, vsyncChoices ),
     DEF_OPT_CHOICE( optsVideoStr[1], &configFiltering, filterChoices ),
-    DEF_OPT_BUTTON( optsVideoStr[4], optvideo_reset_window ),
     DEF_OPT_TOGGLE( optsVideoStr[7], &configHUD ),
+    DEF_OPT_BUTTON( optsVideoStr[4], optvideo_reset_window ),
+    DEF_OPT_BUTTON( optsVideoStr[9], optvideo_apply ),
 };
 
 static struct Option optsAudio[] = {
     DEF_OPT_SCROLL( optsAudioStr[0], &configMasterVolume, 0, MAX_VOLUME, 1 ),
+    DEF_OPT_SCROLL( optsAudioStr[1], &configMusicVolume, 0, MAX_VOLUME, 1),
+    DEF_OPT_SCROLL( optsAudioStr[2], &configSfxVolume, 0, MAX_VOLUME, 1),
+    DEF_OPT_SCROLL( optsAudioStr[3], &configEnvVolume, 0, MAX_VOLUME, 1),
 };
 
 static struct Option optsCheats[] = {
